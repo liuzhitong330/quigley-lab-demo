@@ -221,7 +221,6 @@
     <a href="#motivation">Motivation</a>
     <a href="#exp1">Exp. 1</a>
     <a href="#exp2">Exp. 2</a>
-    <a href="#exp3">Exp. 3</a>
     <a href="#minianalysis">Mini Analysis</a>
     <a href="#relevance">Relevance</a>
   </div>
@@ -235,7 +234,7 @@
   <p>
     To make this concrete, I ran three small experiments using the Quigley Lab's published work as input—
     focusing on metastatic castration-resistant prostate cancer (mCRPC)—to demonstrate what AI-assisted
-    scientific search actually looks like in practice.
+    hypothesis generation actually looks like in practice.
   </p>
 
   <hr id="motivation">
@@ -318,70 +317,7 @@ Confidence unexplored: <strong>High</strong> — these are two separate papers u
 
   <hr id="exp2">
 
-  <h2>Experiment 2 — Keyword Search vs. AI Semantic Expansion</h2>
-  <div class="experiment">
-    <div class="exp-label">Method</div>
-    <div class="exp-title">Evaluating retrieval breadth on a specific mCRPC-relevant query (CHD7 amplification / chromatin remodeling)</div>
-
-    <p style="margin-top:0.6rem; font-size:0.92rem;">
-      I chose CHD7 because it appears in Lundberg 2023 as amplified in the worst-survival AR-/NE- subtype, but
-      its mechanism is undercharacterized. I compared two strategies using the same underlying model:
-    </p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Strategy</th>
-          <th>Prompt Type</th>
-          <th>Time</th>
-          <th>Distinct concepts</th>
-          <th>Output tokens</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>A — Keyword Baseline</strong></td>
-          <td>Direct retrieval from query keywords only</td>
-          <td>10.1s</td>
-          <td>12</td>
-          <td>766</td>
-        </tr>
-        <tr>
-          <td><strong>B — AI Semantic Expansion</strong></td>
-          <td>Expand query → retrieve → synthesize cross-cancer patterns</td>
-          <td>16.3s</td>
-          <td>17</td>
-          <td>1,200</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p style="font-size:0.92rem;">
-      The key difference was not the count but the <em>quality of the cross-cancer insight</em>.
-      Strategy A correctly noted that CHD7 literature is sparse for amplification specifically.
-      Strategy B identified something qualitatively different: CHD7 sits near 8q12,
-      and 8q amplification also carries MYC—meaning many "CHD7 amplification" calls in SCLC and other cancers
-      may be co-amplification passengers. That distinction is critical for experimental design
-      and was completely absent from the keyword-style output.
-    </p>
-
-    <span class="label-inline">Strategy B — Key insight missed by keyword search (verbatim excerpt)</span>
-    <div class="ai-output">CHD7 sits near the 8q12 region, and 8q amplification (which also carries MYC) is recurrent in SCLC. This is mechanistically important: <strong>CHD7 copy-number gain may be partly a passenger of broader 8q/MYC amplification</strong>, which is exactly the kind of confound a keyword search misses. Whether CHD7 is a driver or co-amplified passenger in many tumors is genuinely unresolved.
-
-...
-
-CHD7 cooperates functionally with the PBAF complex and has documented roles supporting neural stem cell maintenance. In MYCN-driven contexts (neuroblastoma, some medulloblastoma), chromatin remodelers maintain the open-chromatin states that oncogenic transcription factors require. This is a plausible resistance node but is more inferential than directly established for CHD7 specifically—I flag this transparently.</div>
-
-    <p class="note">
-      Note that Strategy B also <em>calibrated its confidence</em>—it explicitly flagged which conclusions
-      were mechanistically established versus inferred by analogy. This epistemic transparency is
-      what makes AI a useful research partner rather than a hallucination machine.
-    </p>
-  </div>
-
-  <hr id="exp3">
-
-  <h2>Experiment 3 — Iterative Hypothesis Refinement</h2>
+  <h2>Experiment 2 — Iterative Hypothesis Refinement</h2>
   <div class="experiment">
     <div class="exp-label">Method</div>
     <div class="exp-title">Multi-turn adversarial dialogue to sharpen a hypothesis about KLF5 in AR-/NE- mCRPC</div>
@@ -560,7 +496,7 @@ plt.xlabel("PC1"); plt.ylabel("PC2"); plt.tight_layout()</pre></div>
   </p>
 
   <p>
-    Similarly, Experiment 3 shows that hypothesis refinement, which is normally a social process
+    Similarly, Experiment 2 shows that hypothesis refinement, which is normally a social process
     (lab meeting, peer review), can be partially automated. A researcher can pressure-test a mechanism
     before presenting it, arriving at meetings with a sharper argument.
   </p>
@@ -590,11 +526,10 @@ plt.xlabel("PC1"); plt.ylabel("PC2"); plt.tight_layout()</pre></div>
   <p style="font-size:0.88rem; font-family: system-ui, sans-serif; color: #444;">
     All experiments were run via the Anthropic API (Claude Opus 4.8 model) on June 21, 2025.
     Input to Experiment 1 was a hand-structured summary of the four key Quigley Lab publications.
-    Experiments 2 and 3 used single and multi-turn message formats respectively.
+    Experiment 2 used a three-turn multi-turn message format.
     No external databases, retrieval systems, or web search were used—all output reflects the model's
-    parametric knowledge given the provided context. Experiment 2 concept counts used a heuristic
-    (numbered/bulleted list items); the semantic quality difference is visible in the full outputs above.
-    Total API time: approximately 74 seconds across three experiments.
+    parametric knowledge given the provided context.
+    Total API time: approximately 58 seconds across two experiments.
   </p>
 
   <footer>
