@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-Assisted Scientific Discovery in mCRPC Research</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 18px;
+      line-height: 1.65;
+      color: #1a1a1a;
+      background: #ffffff;
+      padding: 0 1rem;
+    }
+
+    .page {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 3rem 0 5rem;
+    }
+
+    /* --- Typography --- */
+    h1 { font-size: 1.6rem; line-height: 1.25; font-weight: bold; margin-bottom: 0.4rem; }
+    h2 { font-size: 1.1rem; font-weight: bold; margin: 2.4rem 0 0.5rem; }
+    h3 { font-size: 1rem; font-weight: bold; margin: 1.6rem 0 0.3rem; font-style: italic; }
+    p  { margin-bottom: 1rem; }
+    a  { color: #1a1a1a; }
+
+    .byline {
+      color: #555;
+      font-size: 0.9rem;
+      margin-bottom: 2.4rem;
+      font-family: system-ui, sans-serif;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 2.4rem 0;
+    }
+
+    /* --- Experiment blocks --- */
+    .experiment {
+      border-left: 3px solid #1a1a1a;
+      padding-left: 1.2rem;
+      margin: 1.5rem 0;
+    }
+
+    .exp-label {
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #777;
+      margin-bottom: 0.3rem;
+    }
+
+    .exp-title {
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 0.6rem;
+    }
+
+    /* --- Data table --- */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 0.88rem;
+      font-family: system-ui, sans-serif;
+      margin: 1rem 0 1.2rem;
+    }
+    th {
+      text-align: left;
+      border-bottom: 2px solid #1a1a1a;
+      padding: 0.3rem 0.5rem 0.3rem 0;
+      font-weight: bold;
+    }
+    td {
+      border-bottom: 1px solid #eee;
+      padding: 0.35rem 0.5rem 0.35rem 0;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    /* --- Result quotes (actual AI output) --- */
+    .ai-output {
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      padding: 1rem 1.2rem;
+      font-size: 0.84rem;
+      font-family: system-ui, sans-serif;
+      line-height: 1.55;
+      margin: 0.8rem 0 1rem;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+    }
+
+    .label-inline {
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #888;
+      margin-bottom: 0.2rem;
+      display: block;
+    }
+
+    .metric-row {
+      display: flex;
+      gap: 2rem;
+      margin: 0.8rem 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.88rem;
+    }
+    .metric { display: flex; flex-direction: column; }
+    .metric-val { font-size: 1.5rem; font-weight: bold; line-height: 1; }
+    .metric-desc { color: #666; font-size: 0.8rem; margin-top: 0.15rem; }
+
+    .note {
+      font-size: 0.82rem;
+      color: #666;
+      font-family: system-ui, sans-serif;
+      margin-top: 0.6rem;
+    }
+
+    .section-nav {
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: #888;
+      margin-bottom: 2.4rem;
+    }
+    .section-nav a { color: #555; margin-right: 1rem; }
+
+    footer {
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+      color: #888;
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1>AI as a Scientific Co-pilot: Three Experiments in mCRPC Research</h1>
+  <div class="byline">
+    Zhitong Liu &nbsp;·&nbsp; Bioinformatics &nbsp;·&nbsp; liuzhitong330@gmail.com<br>
+    Prepared for the Quigley Lab, UCSF Helen Diller Family Comprehensive Cancer Center
+  </div>
+
+  <div class="section-nav">
+    <a href="#motivation">Motivation</a>
+    <a href="#exp1">Exp. 1</a>
+    <a href="#exp2">Exp. 2</a>
+    <a href="#exp3">Exp. 3</a>
+    <a href="#relevance">Relevance</a>
+  </div>
+
+  <p>
+    The bottleneck in computational cancer genomics is rarely compute. It is the quality of the questions.
+    Researchers spend enormous effort synthesizing scattered literature, writing hypotheses that are too vague to test,
+    and designing experiments without knowing what has already been tried. Large language models (LLMs),
+    used carefully, can compress that synthesis loop from weeks to minutes.
+  </p>
+  <p>
+    To make this concrete, I ran three small experiments using the Quigley Lab's published work as input—
+    focusing on metastatic castration-resistant prostate cancer (mCRPC)—to demonstrate what AI-assisted
+    scientific search actually looks like in practice.
+  </p>
+
+  <hr id="motivation">
+
+  <h2>The Problem with Scientific Experiment Search</h2>
+  <p>
+    When a lab publishes four landmark papers over six years (Quigley et al. Cell 2018; Zhao et al. Nature Genetics 2020;
+    Lundberg et al. Cancer Research 2023; Zhang et al. Nature Cell Biology 2024), the knowledge embedded in those papers
+    does not automatically combine. Each paper analyzes one or two modalities—WGS, WGBS, RNA-seq—and a researcher
+    looking for the next experiment has to mentally integrate all four, cross-reference with external literature,
+    and generate hypotheses without missing obvious intersections.
+  </p>
+  <p>
+    That synthesis is time-consuming, idiosyncratic, and systematically biased toward what the researcher already
+    knows to look for. AI changes the economics of this step. Below are three experiments showing how.
+  </p>
+
+  <hr id="exp1">
+
+  <h2>Experiment 1 — AI-Assisted Research Gap Identification</h2>
+  <div class="experiment">
+    <div class="exp-label">Method</div>
+    <div class="exp-title">Prompting Claude Opus 4 with the lab's four-paper corpus to identify unexplored intersections</div>
+
+    <p style="margin-top:0.6rem; font-size:0.92rem;">
+      I condensed the key findings from the four Quigley Lab publications into a structured prompt (~740 tokens)
+      and asked the model to identify the top 5 tractable, high-impact research gaps where the existing
+      multi-omic data infrastructure could be immediately leveraged. The model was instructed to commit to
+      specific mechanisms and rate each gap's novelty.
+    </p>
+
+    <div class="metric-row">
+      <div class="metric">
+        <span class="metric-val">29.8s</span>
+        <span class="metric-desc">wall time</span>
+      </div>
+      <div class="metric">
+        <span class="metric-val">5</span>
+        <span class="metric-desc">gaps identified</span>
+      </div>
+      <div class="metric">
+        <span class="metric-val">3 / 5</span>
+        <span class="metric-desc">rated High novelty</span>
+      </div>
+    </div>
+
+    <p style="font-size:0.92rem;">
+      The model's reasoning was correct in its framing: the highest-leverage gaps live at the <em>intersections</em>
+      of the four modalities, which were analyzed separately in each paper but never jointly. Two of the gaps
+      identified are immediately actionable given the lab's existing cohort.
+    </p>
+
+    <span class="label-inline">Selected output — Gap 1 (verbatim, lightly trimmed)</span>
+    <div class="ai-output"><strong>Gap 1: Mechanistic coupling between alternative promoter usage and CpG methylation at the same locus</strong>
+
+Gap statement: It is unknown whether the AP switches identified in Zhang 2024 are <em>driven by</em> local promoter CpG methylation changes versus being independent transcriptional events.
+
+Rationale: Zhang 2024 reported AP changes "matched epigenomic alterations" but did not establish per-locus causal directionality or quantify the fraction of AP switches explained by methylation. Alternative promoters frequently contain CpG islands whose methylation state directly gates initiation, so methylation could be the upstream lever.
+
+Experiment: Using the matched RNA-seq + WGBS samples, build a per-promoter regression: for every AP pair, model isoform-specific TPM against WGBS methylation beta-values in a ±2 kb window around each TSS, controlling for copy number (from WGS). Classify AP switches into "methylation-explained," "CNA-explained," and "unexplained." For the top methylation-explained switches in disease drivers (AR, KLF5), validate with targeted dCas9-DNMT3A/TET1 at the promoter.
+
+Confidence unexplored: <strong>High</strong> — Zhang 2024 is recent and presented AP/epigenome as correlated; a systematic per-locus causal partitioning across all three modalities has not been published.</div>
+
+    <span class="label-inline">Selected output — Gap 2 (verbatim)</span>
+    <div class="ai-output"><strong>Gap 2: Whether the AR-/NE- double-negative subtype arises from the hypermethylation (TET2/DNMT3B) epigenomic subtype</strong>
+
+Gap statement: The relationship between Zhao 2020's hypermethylation subtype and Lundberg 2023's AR-/NE- worst-survival subtype has not been directly tested in the overlapping cohort.
+
+Rationale: Both subtypes are independently associated with poor outcomes and aberrant transcriptional state, and KLF5 was nominated in AR-/NE- <em>via methylation</em>, suggesting a shared epigenetic etiology. If double-negative tumors are enriched within the hypermethylator class, it implies a single upstream epigenetic mechanism (DNMT3B/TET2 dysregulation) drives lineage plasticity, unifying two papers into one actionable axis.
+
+Experiment: Cross-tabulate subtype calls on the ~100 tumors common to both WGBS cohorts. Test enrichment (Fisher's exact) and compute methylation at KLF5 and NE-program loci stratified by hypermethylator status.
+
+Confidence unexplored: <strong>High</strong> — these are two separate papers using related but not jointly analyzed sample sets; the direct contingency analysis is an obvious but unpublished next step.</div>
+
+    <p class="note">
+      The model correctly recognized that Gap 2 requires only a contingency test on already-collected data—
+      the kind of low-hanging fruit that gets missed because no one has time to read four papers and cross-reference them simultaneously.
+    </p>
+  </div>
+
+  <hr id="exp2">
+
+  <h2>Experiment 2 — Keyword Search vs. AI Semantic Expansion</h2>
+  <div class="experiment">
+    <div class="exp-label">Method</div>
+    <div class="exp-title">Evaluating retrieval breadth on a specific mCRPC-relevant query (CHD7 amplification / chromatin remodeling)</div>
+
+    <p style="margin-top:0.6rem; font-size:0.92rem;">
+      I chose CHD7 because it appears in Lundberg 2023 as amplified in the worst-survival AR-/NE- subtype, but
+      its mechanism is undercharacterized. I compared two strategies using the same underlying model:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th>Prompt Type</th>
+          <th>Time</th>
+          <th>Distinct concepts</th>
+          <th>Output tokens</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>A — Keyword Baseline</strong></td>
+          <td>Direct retrieval from query keywords only</td>
+          <td>10.1s</td>
+          <td>12</td>
+          <td>766</td>
+        </tr>
+        <tr>
+          <td><strong>B — AI Semantic Expansion</strong></td>
+          <td>Expand query → retrieve → synthesize cross-cancer patterns</td>
+          <td>16.3s</td>
+          <td>17</td>
+          <td>1,200</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:0.92rem;">
+      The key difference was not the count but the <em>quality of the cross-cancer insight</em>.
+      Strategy A correctly noted that CHD7 literature is sparse for amplification specifically.
+      Strategy B identified something qualitatively different: CHD7 sits near 8q12,
+      and 8q amplification also carries MYC—meaning many "CHD7 amplification" calls in SCLC and other cancers
+      may be co-amplification passengers. That distinction is critical for experimental design
+      and was completely absent from the keyword-style output.
+    </p>
+
+    <span class="label-inline">Strategy B — Key insight missed by keyword search (verbatim excerpt)</span>
+    <div class="ai-output">CHD7 sits near the 8q12 region, and 8q amplification (which also carries MYC) is recurrent in SCLC. This is mechanistically important: <strong>CHD7 copy-number gain may be partly a passenger of broader 8q/MYC amplification</strong>, which is exactly the kind of confound a keyword search misses. Whether CHD7 is a driver or co-amplified passenger in many tumors is genuinely unresolved.
+
+...
+
+CHD7 cooperates functionally with the PBAF complex and has documented roles supporting neural stem cell maintenance. In MYCN-driven contexts (neuroblastoma, some medulloblastoma), chromatin remodelers maintain the open-chromatin states that oncogenic transcription factors require. This is a plausible resistance node but is more inferential than directly established for CHD7 specifically—I flag this transparently.</div>
+
+    <p class="note">
+      Note that Strategy B also <em>calibrated its confidence</em>—it explicitly flagged which conclusions
+      were mechanistically established versus inferred by analogy. This epistemic transparency is
+      what makes AI a useful research partner rather than a hallucination machine.
+    </p>
+  </div>
+
+  <hr id="exp3">
+
+  <h2>Experiment 3 — Iterative Hypothesis Refinement</h2>
+  <div class="experiment">
+    <div class="exp-label">Method</div>
+    <div class="exp-title">Multi-turn adversarial dialogue to sharpen a hypothesis about KLF5 in AR-/NE- mCRPC</div>
+
+    <p style="margin-top:0.6rem; font-size:0.92rem;">
+      I simulated the mental loop a researcher runs when refining a hypothesis: generate, critique, refine.
+      Starting from the Lundberg 2023 finding that KLF5 activity is linked to RB1 loss in double-negative mCRPC,
+      I ran a 3-turn dialogue: generate initial hypothesis → self-adversarial critique → refined hypothesis.
+    </p>
+
+    <div class="metric-row">
+      <div class="metric">
+        <span class="metric-val">27.7s</span>
+        <span class="metric-desc">total for 3 turns</span>
+      </div>
+      <div class="metric">
+        <span class="metric-val">1,800</span>
+        <span class="metric-desc">output tokens</span>
+      </div>
+    </div>
+
+    <span class="label-inline">Turn 1 — Initial hypothesis (problematic vagueness)</span>
+    <div class="ai-output"><strong>Core Hypothesis:</strong> KLF5 drives the AR-/NE- phenotype by acting as a pioneer-associated transcription factor that reprograms the enhancer landscape toward a basal/squamous-like, lineage-plastic state once released from RB1-mediated repression.
+
+Step 1 — RB1 loss de-represses KLF5 expression/activity. RB1 normally restrains E2F activity. Upon RB1 loss, E2F-driven transcription is unleashed. I hypothesize KLF5 sits downstream of this axis—either as a direct E2F target <em>or</em> stabilized via loss of RB1-dependent chromatin compaction at the KLF5 locus...</div>
+
+    <span class="label-inline">Turn 2 — Adversarial critique (the model found its own weakness)</span>
+    <div class="ai-output"><strong>Weakness 1:</strong> The RB1→KLF5 causal link is pure assertion dressed as mechanism. You hedge with "either as a direct E2F target or stabilized via loss of RB1-dependent chromatin compaction." That's not a mechanism—that's a list of two mechanisms you can't choose between, which means you have <em>no</em> mechanism.
+
+Worse: the original finding only says KLF5 activity was "linked" to RB1 loss. Correlation. You've silently upgraded "linked" to "downstream of E2F." But RB1 loss and KLF5 activation could both be downstream of a third event (the lineage-plasticity switch itself), making KLF5 a passenger, not a driver. KLF5 is canonically repressed by proliferative signals in some epithelial contexts and is frequently a tumor suppressor. Which is it, and why here?</div>
+
+    <span class="label-inline">Turn 3 — Refined, falsifiable hypothesis</span>
+    <div class="ai-output"><strong>Core Hypothesis (committed, falsifiable):</strong> KLF5 is a driver—not a passenger—of the AR-/NE- phenotype because RB1 loss eliminates a repressive E2F4/p130-DREAM complex at the KLF5 promoter, increasing KLF5 protein dosage; elevated KLF5 then partners with AP-1 (JUN/FOS) at pre-accessible enhancers to activate a basal/squamous KRT-TP63 program while failing to engage NE master regulators—producing the double-negative state.
+
+Reconciling the tumor-suppressor literature: KLF5's direction is determined by its post-translational state and cofactor availability. I predict that in AR-/NE- cells KLF5 is <strong>acetylated by p300</strong> (not deacetylated/ubiquitinated), the acetyl-KLF5 form being the pro-proliferative/lineage-reprogramming species.
+
+<strong>Distinguishing driver from passenger:</strong>
+- Passenger prediction: KLF5 knockdown leaves the AR-/NE- transcriptome intact.
+- Driver prediction (this model): KLF5 knockdown collapses the KRT/TP63 program even with RB1 still absent.</div>
+
+    <p style="font-size:0.92rem;">
+      The shift from Turn 1 to Turn 3 is the core value proposition: the model moved from a hand-wavy
+      "E2F target OR chromatin compaction" to a specific, committal, self-consistent mechanism
+      with falsifiable predictions distinguishing driver from passenger effects.
+      A researcher running this dialogue compresses what might be an hour of blackboard iteration into 27 seconds.
+    </p>
+  </div>
+
+  <hr id="relevance">
+
+  <h2>Why This Matters for the Quigley Lab</h2>
+
+  <p>
+    The lab's comparative advantage is data. Four papers, 210+ matched tumor biopsies with WGS/WGBS/RNA-seq—
+    that is an extraordinary multi-omic resource. The rate-limiting step is not data collection; it is the speed
+    at which the team can ask the right questions of it.
+  </p>
+
+  <p>
+    The three experiments above suggest a specific workflow: <strong>AI-assisted gap mapping before each
+    new analysis sprint.</strong> Feed the existing publication summary into a structured prompt, run a gap-identification
+    pass, and filter the results by experimental feasibility given the existing cohort. What Experiment 1 found in
+    30 seconds—the contingency test linking Zhao 2020's hypermethylator subtype to Lundberg 2023's AR-/NE-
+    subtype—would have been equally findable by a careful researcher, but it requires holding four papers
+    in working memory simultaneously. AI externalizes that memory.
+  </p>
+
+  <p>
+    Similarly, Experiment 3 shows that hypothesis refinement, which is normally a social process
+    (lab meeting, peer review), can be partially automated. A researcher can pressure-test a mechanism
+    before presenting it, arriving at meetings with a sharper argument.
+  </p>
+
+  <p>
+    These are not speculative capabilities. The experiments above were run in approximately 75 seconds
+    of total API time, on real biological content, with no prompt engineering beyond plain English instructions.
+  </p>
+
+  <h3>Concrete contributions I would bring</h3>
+  <p>
+    My background spans computational genomics (WGS/RNA-seq pipelines), statistical modeling, and applied LLM tooling.
+    In the Quigley Lab context, I would focus on building the infrastructure to make AI-assisted analysis
+    a reproducible part of the research workflow—not a one-off trick, but a version-controlled system
+    where prompts are treated as code, outputs are logged, and AI-generated hypotheses are formally tracked
+    against experimental outcomes.
+  </p>
+  <p>
+    The scientific questions in mCRPC—lineage plasticity, epigenetic reprogramming, alternative promoter switching—
+    are exactly the kind of multi-modal, high-dimensional problems where AI synthesis adds the most value.
+    I would be excited to apply these methods to the lab's existing cohorts and future data.
+  </p>
+
+  <hr>
+
+  <h2>Methods Note</h2>
+  <p style="font-size:0.88rem; font-family: system-ui, sans-serif; color: #444;">
+    All experiments were run via the Anthropic API (Claude Opus 4.8 model) on June 21, 2025.
+    Input to Experiment 1 was a hand-structured summary of the four key Quigley Lab publications.
+    Experiments 2 and 3 used single and multi-turn message formats respectively.
+    No external databases, retrieval systems, or web search were used—all output reflects the model's
+    parametric knowledge given the provided context. Experiment 2 concept counts used a heuristic
+    (numbered/bulleted list items); the semantic quality difference is visible in the full outputs above.
+    Total API time: approximately 74 seconds across three experiments.
+  </p>
+
+  <footer>
+    Zhitong Liu &nbsp;·&nbsp; liuzhitong330@gmail.com &nbsp;·&nbsp;
+    <a href="https://github.com/liuzhitong330">github.com/liuzhitong330</a><br>
+    Quigley Lab, UCSF — Helen Diller Family Comprehensive Cancer Center
+  </footer>
+
+</div>
+</body>
+</html>
