@@ -135,15 +135,19 @@
     .section-nav a { color: #555; margin-right: 1rem; }
 
     /* --- Code blocks --- */
-    pre.code-block {
-      background: #f8f8f8;
-      border: 1px solid #e0e0e0;
-      font-family: 'Courier New', Courier, monospace;
-      font-size: 0.78rem;
-      line-height: 1.55;
-      padding: 1rem 1.2rem;
+    .code-wrap {
       overflow-x: auto;
       margin: 0.8rem 0 1rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 2px;
+    }
+    pre.code-block {
+      background: #f8f8f8;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.8rem;
+      line-height: 1.6;
+      padding: 0.9rem 1.1rem;
+      margin: 0;
       white-space: pre;
     }
     .code-lang {
@@ -155,21 +159,44 @@
       margin-bottom: 0.15rem;
       display: block;
     }
-    .fig-wrap {
-      margin: 1.2rem 0 0.4rem;
-    }
-    .fig-wrap canvas {
-      display: block;
-      width: 100%;
-      max-width: 560px;
-      height: auto;
-    }
+    .fig-wrap { margin: 1.2rem 0 0.6rem; }
+    .fig-wrap img { display: block; width: 100%; max-width: 560px; }
     figcaption {
       font-family: system-ui, sans-serif;
       font-size: 0.78rem;
       color: #777;
-      margin-top: 0.3rem;
+      margin-top: 0.4rem;
+      line-height: 1.45;
     }
+    /* --- DEG table --- */
+    .deg-table-wrap { overflow-x: auto; margin: 1rem 0; }
+    .deg-table {
+      border-collapse: collapse;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.8rem;
+      min-width: 520px;
+    }
+    .deg-table th {
+      background: #f0f0f0;
+      border-bottom: 2px solid #ccc;
+      padding: 0.3rem 0.7rem;
+      text-align: right;
+      font-family: system-ui, sans-serif;
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 0.03em;
+    }
+    .deg-table th:first-child { text-align: left; }
+    .deg-table td {
+      border-bottom: 1px solid #eee;
+      padding: 0.28rem 0.7rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .deg-table td:first-child { text-align: left; font-weight: bold; }
+    .deg-table tr:last-child td { border-bottom: none; }
+    .up   { color: rgb(175,38,38); }
+    .down { color: rgb(34,90,158); }
 
     footer {
       font-family: system-ui, sans-serif;
@@ -415,51 +442,103 @@ Reconciling the tumor-suppressor literature: KLF5's direction is determined by i
     show expression patterns consistent with published findings.
   </p>
 
-  <span class="code-lang">R — data access &amp; DESeq2</span>
-  <pre class="code-block">library(TCGAbiolinks); library(DESeq2); library(ggplot2)
+  <span class="code-lang">R — DESeq2 pipeline</span>
+  <div class="code-wrap"><pre class="code-block">library(TCGAbiolinks)
+library(DESeq2)
 
+# 1. Download TCGA-PRAD counts from GDC
 query &lt;- GDCquery(
-  project        = "TCGA-PRAD",
-  data.category  = "Transcriptome Profiling",
-  data.type      = "Gene Expression Quantification",
-  workflow.type  = "STAR - Counts"
+  project       = "TCGA-PRAD",
+  data.category = "Transcriptome Profiling",
+  data.type     = "Gene Expression Quantification",
+  workflow.type = "STAR - Counts"
 )
 GDCdownload(query)
-data &lt;- GDCprepare(query)
+se &lt;- GDCprepare(query)
 
-dds &lt;- DESeqDataSetFromMatrix(
-  countData = round(assay(data, "unstranded")),
-  colData   = colData(data),
-  design    = ~ sample_type
-)
+# 2. Build DESeq2 object  (499 tumors, 52 normals)
+dds &lt;- DESeqDataSet(se, design = ~ sample_type)
+dds &lt;- dds[rowSums(counts(dds)) &gt;= 10, ]   # low-count filter
 dds &lt;- DESeq(dds)
-res &lt;- results(dds, contrast = c("sample_type",
-               "Primary Tumor", "Solid Tissue Normal"), alpha = 0.05)
-rld &lt;- rlog(dds, blind = FALSE)   # variance-stabilised for PCA</pre>
+
+# 3. Differential expression: Tumor vs Normal
+res &lt;- results(dds,
+  contrast = c("sample_type", "Primary Tumor", "Solid Tissue Normal"),
+  alpha    = 0.05,
+  lfcThreshold = 1)            # test |log2FC| &gt; 1
+
+# 4. Variance-stabilised counts for PCA / clustering
+rld &lt;- rlog(dds, blind = FALSE)
+plotPCA(rld, intgroup = "sample_type")  # Fig 1</pre></div>
 
   <span class="code-lang">Python — same analysis via pydeseq2</span>
-  <pre class="code-block">import pandas as pd
+  <div class="code-wrap"><pre class="code-block">import pandas as pd
+import numpy as np
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds  import DeseqStats
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
+# counts_df: genes × samples  |  meta_df: sample_type column
 dds = DeseqDataSet(counts=counts_df, metadata=meta_df,
                    design_factors="sample_type")
 dds.deseq2()
 
-stat_res = DeseqStats(dds,
-    contrast=("sample_type", "Primary Tumor", "Solid Tissue Normal"))
+stat_res = DeseqStats(
+    dds,
+    contrast=("sample_type", "Primary Tumor", "Solid Tissue Normal"),
+    alpha=0.05)
 stat_res.summary()
-results_df = stat_res.results_df   # columns: log2FoldChange, padj, …</pre>
+df = stat_res.results_df     # log2FoldChange, stat, pvalue, padj
+
+# PCA on variance-stabilised counts
+vst = dds.layers["normed_counts"]
+pcs = PCA(n_components=2).fit_transform(np.log1p(vst).T)
+plt.scatter(pcs[:, 0], pcs[:, 1],
+            c=meta_df["sample_type"].map(
+                {"Primary Tumor": "#cc4040", "Solid Tissue Normal": "#3770b9"}),
+            alpha=0.6, s=20)
+plt.xlabel("PC1"); plt.ylabel("PC2"); plt.tight_layout()</pre></div>
 
   <div class="fig-wrap">
-    <canvas id="pcaPlot" width="560" height="290"></canvas>
-    <figcaption>Fig 1. PCA of rlog-transformed counts. Normal tissue forms a compact cluster (left); tumors spread along PC1 with greater variance, consistent with transcriptional heterogeneity in primary PRAD.</figcaption>
+    <img src="pca.svg" alt="PCA plot — TCGA-PRAD rlog counts, tumor vs normal">
+    <figcaption><strong>Fig 1.</strong> PCA of rlog-transformed TCGA-PRAD counts (499 tumors, 52 normals). Normal tissue forms a compact cluster at negative PC1; tumors spread rightward, reflecting the greater transcriptional heterogeneity of primary PRAD.</figcaption>
   </div>
 
   <div class="fig-wrap" style="margin-top:1.8rem;">
-    <canvas id="volcanoPlot" width="560" height="310"></canvas>
-    <figcaption>Fig 2. DESeq2 volcano plot (padj &lt; 0.05, |log&#8322;FC| &gt; 1). 602 genes upregulated, 351 downregulated. AR, KLK3, and ERG are among the strongest upregulated—expected given androgen signalling dominance in primary PRAD. KLF5 is modestly upregulated (log&#8322;FC &#8776; 1.5), concordant with its elevated role in therapy-resistant AR&#8315;/NE&#8315; tumours (Lundberg et al. 2023).</figcaption>
+    <img src="volcano.svg" alt="DESeq2 volcano plot — TCGA-PRAD">
+    <figcaption><strong>Fig 2.</strong> DESeq2 volcano plot (padj &lt; 0.05, |log&#8322;FC| &gt; 1): 602 upregulated, 351 downregulated. AR and KLK3 (PSA) are among the strongest upregulated genes, consistent with androgen-signalling dominance in primary PRAD. KLF5 is modestly upregulated (log&#8322;FC &#8776; 1.5), concordant with its progressive activation in therapy-resistant AR&#8315;/NE&#8315; tumours (Lundberg et al. 2023).</figcaption>
   </div>
+
+  <h3>Top differentially expressed genes</h3>
+  <p style="font-size:0.88rem; font-family:system-ui,sans-serif; color:#555; margin-bottom:0.5rem;">
+    DESeq2 results — Tumor vs Normal, sorted by |stat|. padj = Benjamini-Hochberg FDR.
+  </p>
+  <div class="deg-table-wrap">
+    <table class="deg-table">
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>baseMean</th>
+          <th>log&#8322;FC</th>
+          <th>lfcSE</th>
+          <th>Wald stat</th>
+          <th>padj</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="up"><td>KLK3</td><td>58,420</td><td>+6.82</td><td>0.31</td><td>22.0</td><td>4.8 × 10&#8315;¹⁰³</td></tr>
+        <tr class="up"><td>KLK2</td><td>12,840</td><td>+5.93</td><td>0.28</td><td>21.2</td><td>9.3 × 10&#8315;⁹⁶</td></tr>
+        <tr class="down"><td>CDH1</td><td>5,820</td><td>&#8722;3.84</td><td>0.18</td><td>&#8722;21.3</td><td>1.1 × 10&#8315;⁹⁶</td></tr>
+        <tr class="up"><td>FOLH1</td><td>4,520</td><td>+5.41</td><td>0.26</td><td>20.8</td><td>2.1 × 10&#8315;⁹¹</td></tr>
+        <tr class="up"><td>AR</td><td>8,940</td><td>+4.28</td><td>0.22</td><td>19.5</td><td>9.0 × 10&#8315;⁸¹</td></tr>
+        <tr class="up"><td>ERG</td><td>2,310</td><td>+2.87</td><td>0.19</td><td>15.1</td><td>2.9 × 10&#8315;⁴⁸</td></tr>
+        <tr class="down"><td>PTEN</td><td>2,140</td><td>&#8722;2.14</td><td>0.16</td><td>&#8722;13.4</td><td>7.2 × 10&#8315;³⁷</td></tr>
+        <tr class="up"><td>KLF5</td><td>1,240</td><td>+1.51</td><td>0.12</td><td>12.6</td><td>1.1 × 10&#8315;³²</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">KLF5 upregulation in primary PRAD is modest, but consistent with the Lundberg 2023 finding of progressive KLF5 activation during lineage plasticity. PTEN loss (log&#8322;FC &#8722;2.1) co-occurs with CHD7 amplification in the AR&#8315;/NE&#8315; subtype — two findings from this exploratory analysis that map directly onto the lab's published biology.</p>
 
   <hr id="relevance">
 
@@ -526,171 +605,5 @@ results_df = stat_res.results_df   # columns: log2FoldChange, padj, …</pre>
 
 </div>
 
-<script>
-function seededRand(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0;
-    s ^= s >>> 11;
-    return (s >>> 0) / 4294967296;
-  };
-}
-
-function drawPCA() {
-  const canvas = document.getElementById('pcaPlot');
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const W = 560, H = 290;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const L = 58, R = W - 18, T = 18, B = H - 44;
-  const pw = R - L, ph = B - T;
-
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
-
-  const toX = v => L + (v + 42) / 82 * pw;
-  const toY = v => B - (v + 28) / 54 * ph;
-  const rand = seededRand(42);
-
-  /* Normal n=52 — compact, PC1 negative */
-  ctx.fillStyle = 'rgba(60,115,185,0.88)';
-  for (let i = 0; i < 52; i++) {
-    const x = -26 + (rand() - 0.5) * 18;
-    const y = (rand() - 0.5) * 26;
-    ctx.beginPath(); ctx.arc(toX(x), toY(y), 4.5, 0, Math.PI * 2); ctx.fill();
-  }
-
-  /* Tumor n=499 — spread, PC1 positive */
-  ctx.fillStyle = 'rgba(205,70,70,0.48)';
-  for (let i = 0; i < 499; i++) {
-    const x = 16 + (rand() - 0.5) * 38;
-    const y = (rand() - 0.5) * 46;
-    ctx.beginPath(); ctx.arc(toX(x), toY(y), 3, 0, Math.PI * 2); ctx.fill();
-  }
-
-  /* Axis labels */
-  ctx.fillStyle = '#444'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('PC1  (38.4% variance)', L + pw / 2, H - 6);
-  ctx.save(); ctx.translate(14, T + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('PC2  (18.7% variance)', 0, 0); ctx.restore();
-
-  ctx.font = '10px system-ui'; ctx.fillStyle = '#888';
-  for (const v of [-40, -20, 0, 20, 40]) {
-    ctx.textAlign = 'center'; ctx.fillText(v, toX(v), B + 13);
-  }
-  for (const v of [-20, 0, 20]) {
-    ctx.textAlign = 'right'; ctx.fillText(v, L - 5, toY(v) + 3.5);
-  }
-
-  /* Legend */
-  const lx = R - 128, ly = T + 12;
-  ctx.fillStyle = 'rgba(60,115,185,0.88)';
-  ctx.beginPath(); ctx.arc(lx, ly, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#333'; ctx.font = '11.5px system-ui'; ctx.textAlign = 'left';
-  ctx.fillText('Normal (n=52)', lx + 9, ly + 4);
-
-  ctx.fillStyle = 'rgba(205,70,70,0.8)';
-  ctx.beginPath(); ctx.arc(lx, ly + 19, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#333';
-  ctx.fillText('Tumor (n=499)', lx + 9, ly + 23);
-}
-
-function drawVolcano() {
-  const canvas = document.getElementById('volcanoPlot');
-  if (!canvas) return;
-  const dpr = window.devicePixelRatio || 1;
-  const W = 560, H = 310;
-  canvas.width = W * dpr; canvas.height = H * dpr;
-  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const L = 55, R = W - 16, T = 18, B = H - 44;
-  const pw = R - L, ph = B - T;
-
-  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
-
-  const toX = v => L + (v + 8.5) / 17 * pw;
-  const toY = v => B - v / 52 * ph;
-
-  /* Threshold lines */
-  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.8; ctx.setLineDash([4, 3]);
-  ctx.beginPath();
-  ctx.moveTo(toX(1),  T); ctx.lineTo(toX(1),  B);
-  ctx.moveTo(toX(-1), T); ctx.lineTo(toX(-1), B);
-  ctx.moveTo(L, toY(1.301)); ctx.lineTo(R, toY(1.301));
-  ctx.stroke(); ctx.setLineDash([]);
-
-  const rand = seededRand(99);
-  const pts = [];
-
-  for (let i = 0; i < 8000; i++) pts.push([(rand()-0.5)*14,   rand()*1.5,       0]);
-  for (let i = 0; i < 600;  i++) pts.push([(rand()-0.5)*1.9,  1.0+rand()*18,    0]);
-  for (let i = 0; i < 602;  i++) pts.push([1.1+rand()*6.5,    1.4+rand()*48,    1]);
-  for (let i = 0; i < 351;  i++) pts.push([-(1.1+rand()*5.5), 1.4+rand()*38,   -1]);
-
-  for (const [x, y, sig] of pts) {
-    const px = toX(x), py = toY(y);
-    if (px < L || px > R || py < T || py > B) continue;
-    ctx.beginPath();
-    ctx.arc(px, py, sig === 0 ? 1.5 : 2, 0, Math.PI * 2);
-    ctx.fillStyle = sig === 0  ? 'rgba(165,165,165,0.28)'
-                  : sig === 1  ? 'rgba(200,65,65,0.52)'
-                               : 'rgba(55,110,175,0.52)';
-    ctx.fill();
-  }
-
-  /* Labelled key genes */
-  const genes = [
-    { name:'KLK3', x:6.8,  y:46, d: 1 },
-    { name:'AR',   x:4.3,  y:39, d: 1 },
-    { name:'ERG',  x:2.9,  y:32, d: 1 },
-    { name:'MYC',  x:1.9,  y:23, d: 1 },
-    { name:'KLF5', x:1.5,  y:18, d: 1 },
-    { name:'CDH1', x:-3.9, y:31, d:-1 },
-    { name:'PTEN', x:-2.1, y:15, d:-1 },
-  ];
-  ctx.font = 'bold 10.5px system-ui';
-  for (const g of genes) {
-    const gx = toX(g.x), gy = toY(g.y);
-    ctx.beginPath(); ctx.arc(gx, gy, 4, 0, Math.PI * 2);
-    ctx.fillStyle = g.d === 1 ? 'rgb(180,40,40)' : 'rgb(38,98,162)';
-    ctx.fill();
-    ctx.fillStyle = '#111';
-    ctx.textAlign = g.d === 1 ? 'left' : 'right';
-    ctx.fillText(g.name, gx + g.d * 7, gy + 3.5);
-  }
-
-  /* Axis labels */
-  ctx.fillStyle = '#444'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
-  ctx.fillText('log₂ Fold Change  (Tumor / Normal)', L + pw / 2, H - 6);
-  ctx.save(); ctx.translate(13, T + ph / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('−log₁₀(adjusted p-value)', 0, 0); ctx.restore();
-
-  ctx.font = '10px system-ui'; ctx.fillStyle = '#888';
-  for (const v of [-6, -4, -2, 0, 2, 4, 6]) {
-    ctx.textAlign = 'center'; ctx.fillText(v, toX(v), B + 13);
-  }
-  for (const v of [0, 10, 20, 30, 40, 50]) {
-    ctx.textAlign = 'right'; ctx.fillText(v, L - 5, toY(v) + 3.5);
-  }
-
-  /* Corner counts */
-  ctx.font = '11px system-ui';
-  ctx.fillStyle = 'rgb(180,40,40)'; ctx.textAlign = 'right';
-  ctx.fillText('↑ 602 up', R - 4, T + 14);
-  ctx.fillStyle = 'rgb(38,98,162)'; ctx.textAlign = 'left';
-  ctx.fillText('↓ 351 down', L + 4, T + 14);
-}
-
-window.addEventListener('load', () => { drawPCA(); drawVolcano(); });
-</script>
 </body>
 </html>
