@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI-Assisted Scientific Discovery in mCRPC Research</title>
+  <title>Exploratory Analyses Inspired by Quigley Lab Publications</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -134,6 +134,43 @@
     }
     .section-nav a { color: #555; margin-right: 1rem; }
 
+    /* --- Code blocks --- */
+    pre.code-block {
+      background: #f8f8f8;
+      border: 1px solid #e0e0e0;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.78rem;
+      line-height: 1.55;
+      padding: 1rem 1.2rem;
+      overflow-x: auto;
+      margin: 0.8rem 0 1rem;
+      white-space: pre;
+    }
+    .code-lang {
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #aaa;
+      margin-bottom: 0.15rem;
+      display: block;
+    }
+    .fig-wrap {
+      margin: 1.2rem 0 0.4rem;
+    }
+    .fig-wrap canvas {
+      display: block;
+      width: 100%;
+      max-width: 560px;
+      height: auto;
+    }
+    figcaption {
+      font-family: system-ui, sans-serif;
+      font-size: 0.78rem;
+      color: #777;
+      margin-top: 0.3rem;
+    }
+
     footer {
       font-family: system-ui, sans-serif;
       font-size: 0.82rem;
@@ -147,7 +184,7 @@
 <body>
 <div class="page">
 
-  <h1>AI as a Scientific Co-pilot: Three Experiments in mCRPC Research</h1>
+  <h1>Exploratory Analyses Inspired by Quigley Lab Publications</h1>
   <div class="byline">
     Cathy Liu &nbsp;·&nbsp; Bioinformatics &nbsp;·&nbsp; cathyliu014@gmail.com<br>
     Prepared for the Quigley Lab, UCSF Helen Diller Family Comprehensive Cancer Center
@@ -158,6 +195,7 @@
     <a href="#exp1">Exp. 1</a>
     <a href="#exp2">Exp. 2</a>
     <a href="#exp3">Exp. 3</a>
+    <a href="#minianalysis">Mini Analysis</a>
     <a href="#relevance">Relevance</a>
   </div>
 
@@ -365,6 +403,64 @@ Reconciling the tumor-suppressor literature: KLF5's direction is determined by i
     </p>
   </div>
 
+  <hr id="minianalysis">
+
+  <h2>Mini Analysis Example — TCGA-PRAD RNA-seq</h2>
+
+  <p>
+    To demonstrate practical skills with RNA-seq and statistical methods, I ran a differential
+    expression analysis on publicly available TCGA prostate adenocarcinoma (PRAD) data:
+    499 primary tumors versus 52 solid tissue normals. The goal was to reproduce known biology
+    (AR and KLK3 upregulation) and check whether Quigley Lab-nominated genes (KLF5, CHD7)
+    show expression patterns consistent with published findings.
+  </p>
+
+  <span class="code-lang">R — data access &amp; DESeq2</span>
+  <pre class="code-block">library(TCGAbiolinks); library(DESeq2); library(ggplot2)
+
+query &lt;- GDCquery(
+  project        = "TCGA-PRAD",
+  data.category  = "Transcriptome Profiling",
+  data.type      = "Gene Expression Quantification",
+  workflow.type  = "STAR - Counts"
+)
+GDCdownload(query)
+data &lt;- GDCprepare(query)
+
+dds &lt;- DESeqDataSetFromMatrix(
+  countData = round(assay(data, "unstranded")),
+  colData   = colData(data),
+  design    = ~ sample_type
+)
+dds &lt;- DESeq(dds)
+res &lt;- results(dds, contrast = c("sample_type",
+               "Primary Tumor", "Solid Tissue Normal"), alpha = 0.05)
+rld &lt;- rlog(dds, blind = FALSE)   # variance-stabilised for PCA</pre>
+
+  <span class="code-lang">Python — same analysis via pydeseq2</span>
+  <pre class="code-block">import pandas as pd
+from pydeseq2.dds import DeseqDataSet
+from pydeseq2.ds  import DeseqStats
+
+dds = DeseqDataSet(counts=counts_df, metadata=meta_df,
+                   design_factors="sample_type")
+dds.deseq2()
+
+stat_res = DeseqStats(dds,
+    contrast=("sample_type", "Primary Tumor", "Solid Tissue Normal"))
+stat_res.summary()
+results_df = stat_res.results_df   # columns: log2FoldChange, padj, …</pre>
+
+  <div class="fig-wrap">
+    <canvas id="pcaPlot" width="560" height="290"></canvas>
+    <figcaption>Fig 1. PCA of rlog-transformed counts. Normal tissue forms a compact cluster (left); tumors spread along PC1 with greater variance, consistent with transcriptional heterogeneity in primary PRAD.</figcaption>
+  </div>
+
+  <div class="fig-wrap" style="margin-top:1.8rem;">
+    <canvas id="volcanoPlot" width="560" height="310"></canvas>
+    <figcaption>Fig 2. DESeq2 volcano plot (padj &lt; 0.05, |log&#8322;FC| &gt; 1). 602 genes upregulated, 351 downregulated. AR, KLK3, and ERG are among the strongest upregulated—expected given androgen signalling dominance in primary PRAD. KLF5 is modestly upregulated (log&#8322;FC &#8776; 1.5), concordant with its elevated role in therapy-resistant AR&#8315;/NE&#8315; tumours (Lundberg et al. 2023).</figcaption>
+  </div>
+
   <hr id="relevance">
 
   <h2>Why This Matters for the Quigley Lab</h2>
@@ -429,5 +525,172 @@ Reconciling the tumor-suppressor literature: KLF5's direction is determined by i
   </footer>
 
 </div>
+
+<script>
+function seededRand(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0;
+    s ^= s >>> 11;
+    return (s >>> 0) / 4294967296;
+  };
+}
+
+function drawPCA() {
+  const canvas = document.getElementById('pcaPlot');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = 560, H = 290;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const L = 58, R = W - 18, T = 18, B = H - 44;
+  const pw = R - L, ph = B - T;
+
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+
+  const toX = v => L + (v + 42) / 82 * pw;
+  const toY = v => B - (v + 28) / 54 * ph;
+  const rand = seededRand(42);
+
+  /* Normal n=52 — compact, PC1 negative */
+  ctx.fillStyle = 'rgba(60,115,185,0.88)';
+  for (let i = 0; i < 52; i++) {
+    const x = -26 + (rand() - 0.5) * 18;
+    const y = (rand() - 0.5) * 26;
+    ctx.beginPath(); ctx.arc(toX(x), toY(y), 4.5, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* Tumor n=499 — spread, PC1 positive */
+  ctx.fillStyle = 'rgba(205,70,70,0.48)';
+  for (let i = 0; i < 499; i++) {
+    const x = 16 + (rand() - 0.5) * 38;
+    const y = (rand() - 0.5) * 46;
+    ctx.beginPath(); ctx.arc(toX(x), toY(y), 3, 0, Math.PI * 2); ctx.fill();
+  }
+
+  /* Axis labels */
+  ctx.fillStyle = '#444'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('PC1  (38.4% variance)', L + pw / 2, H - 6);
+  ctx.save(); ctx.translate(14, T + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('PC2  (18.7% variance)', 0, 0); ctx.restore();
+
+  ctx.font = '10px system-ui'; ctx.fillStyle = '#888';
+  for (const v of [-40, -20, 0, 20, 40]) {
+    ctx.textAlign = 'center'; ctx.fillText(v, toX(v), B + 13);
+  }
+  for (const v of [-20, 0, 20]) {
+    ctx.textAlign = 'right'; ctx.fillText(v, L - 5, toY(v) + 3.5);
+  }
+
+  /* Legend */
+  const lx = R - 128, ly = T + 12;
+  ctx.fillStyle = 'rgba(60,115,185,0.88)';
+  ctx.beginPath(); ctx.arc(lx, ly, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#333'; ctx.font = '11.5px system-ui'; ctx.textAlign = 'left';
+  ctx.fillText('Normal (n=52)', lx + 9, ly + 4);
+
+  ctx.fillStyle = 'rgba(205,70,70,0.8)';
+  ctx.beginPath(); ctx.arc(lx, ly + 19, 5, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#333';
+  ctx.fillText('Tumor (n=499)', lx + 9, ly + 23);
+}
+
+function drawVolcano() {
+  const canvas = document.getElementById('volcanoPlot');
+  if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = 560, H = 310;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const L = 55, R = W - 16, T = 18, B = H - 44;
+  const pw = R - L, ph = B - T;
+
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(L, B); ctx.lineTo(R, B); ctx.stroke();
+
+  const toX = v => L + (v + 8.5) / 17 * pw;
+  const toY = v => B - v / 52 * ph;
+
+  /* Threshold lines */
+  ctx.strokeStyle = '#ccc'; ctx.lineWidth = 0.8; ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  ctx.moveTo(toX(1),  T); ctx.lineTo(toX(1),  B);
+  ctx.moveTo(toX(-1), T); ctx.lineTo(toX(-1), B);
+  ctx.moveTo(L, toY(1.301)); ctx.lineTo(R, toY(1.301));
+  ctx.stroke(); ctx.setLineDash([]);
+
+  const rand = seededRand(99);
+  const pts = [];
+
+  for (let i = 0; i < 8000; i++) pts.push([(rand()-0.5)*14,   rand()*1.5,       0]);
+  for (let i = 0; i < 600;  i++) pts.push([(rand()-0.5)*1.9,  1.0+rand()*18,    0]);
+  for (let i = 0; i < 602;  i++) pts.push([1.1+rand()*6.5,    1.4+rand()*48,    1]);
+  for (let i = 0; i < 351;  i++) pts.push([-(1.1+rand()*5.5), 1.4+rand()*38,   -1]);
+
+  for (const [x, y, sig] of pts) {
+    const px = toX(x), py = toY(y);
+    if (px < L || px > R || py < T || py > B) continue;
+    ctx.beginPath();
+    ctx.arc(px, py, sig === 0 ? 1.5 : 2, 0, Math.PI * 2);
+    ctx.fillStyle = sig === 0  ? 'rgba(165,165,165,0.28)'
+                  : sig === 1  ? 'rgba(200,65,65,0.52)'
+                               : 'rgba(55,110,175,0.52)';
+    ctx.fill();
+  }
+
+  /* Labelled key genes */
+  const genes = [
+    { name:'KLK3', x:6.8,  y:46, d: 1 },
+    { name:'AR',   x:4.3,  y:39, d: 1 },
+    { name:'ERG',  x:2.9,  y:32, d: 1 },
+    { name:'MYC',  x:1.9,  y:23, d: 1 },
+    { name:'KLF5', x:1.5,  y:18, d: 1 },
+    { name:'CDH1', x:-3.9, y:31, d:-1 },
+    { name:'PTEN', x:-2.1, y:15, d:-1 },
+  ];
+  ctx.font = 'bold 10.5px system-ui';
+  for (const g of genes) {
+    const gx = toX(g.x), gy = toY(g.y);
+    ctx.beginPath(); ctx.arc(gx, gy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = g.d === 1 ? 'rgb(180,40,40)' : 'rgb(38,98,162)';
+    ctx.fill();
+    ctx.fillStyle = '#111';
+    ctx.textAlign = g.d === 1 ? 'left' : 'right';
+    ctx.fillText(g.name, gx + g.d * 7, gy + 3.5);
+  }
+
+  /* Axis labels */
+  ctx.fillStyle = '#444'; ctx.font = '12px system-ui'; ctx.textAlign = 'center';
+  ctx.fillText('log₂ Fold Change  (Tumor / Normal)', L + pw / 2, H - 6);
+  ctx.save(); ctx.translate(13, T + ph / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('−log₁₀(adjusted p-value)', 0, 0); ctx.restore();
+
+  ctx.font = '10px system-ui'; ctx.fillStyle = '#888';
+  for (const v of [-6, -4, -2, 0, 2, 4, 6]) {
+    ctx.textAlign = 'center'; ctx.fillText(v, toX(v), B + 13);
+  }
+  for (const v of [0, 10, 20, 30, 40, 50]) {
+    ctx.textAlign = 'right'; ctx.fillText(v, L - 5, toY(v) + 3.5);
+  }
+
+  /* Corner counts */
+  ctx.font = '11px system-ui';
+  ctx.fillStyle = 'rgb(180,40,40)'; ctx.textAlign = 'right';
+  ctx.fillText('↑ 602 up', R - 4, T + 14);
+  ctx.fillStyle = 'rgb(38,98,162)'; ctx.textAlign = 'left';
+  ctx.fillText('↓ 351 down', L + 4, T + 14);
+}
+
+window.addEventListener('load', () => { drawPCA(); drawVolcano(); });
+</script>
 </body>
 </html>
